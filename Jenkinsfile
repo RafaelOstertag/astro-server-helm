@@ -31,6 +31,7 @@ pipeline {
             steps {
                 withKubeConfig(credentialsId: 'a9fe556b-01b0-4354-9a65-616baccf9cac') {
                     sh "helm upgrade -n astro -i --set image.tag=${params.VERSION} astro-server astro-server"
+                    sh "helm upgrade -n astro -i --set image.tag=${params.VERSION} catalog-fetcher catalog-fetcher"
                 }
             }
         }

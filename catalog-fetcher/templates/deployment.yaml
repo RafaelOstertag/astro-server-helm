@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "catalog-fetcher.fullname" . }}
+  labels:
+    {{- include "catalog-fetcher.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "catalog-fetcher.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "catalog-fetcher.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "catalog-fetcher.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: http
+            initialDelaySeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: http
+          env:
+            - name: ASTRO_SERVER_CATALOG_FILE_PATH
+              value: "/data/NGC.csv"
+            - name: QUARKUS_OIDC_CREDENTIALS_CLIENT_SECRET_VALUE
+              valueFrom:
+                secretKeyRef:
+                  name: catalog-fetcher-secret
+                  key: client-secret
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /data
+              name: pv-0
+            - mountPath: /tmp
+              name: tmp-volume
+      volumes:
+        - name: pv-0
+          persistentVolumeClaim:
+            claimName: nfs-0
+        - name: tmp-volume
+          emptyDir: { }
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

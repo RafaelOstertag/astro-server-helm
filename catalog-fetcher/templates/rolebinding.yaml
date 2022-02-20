@@ -1,0 +1,11 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "catalog-fetcher.fullname" . }}
+roleRef:
+  kind: Role
+  name: {{ include "catalog-fetcher.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "catalog-fetcher.serviceAccountName" . }}
