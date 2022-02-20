@@ -49,7 +49,11 @@ spec:
           env:
             - name: ASTRO_SERVER_CATALOG_FILE_PATH
               value: "/data/NGC.csv"
-            - name: QUARKUS_OIDC_CREDENTIALS_CLIENT_SECRET_VALUE
+            - name: QUARKUS_OIDC_CLIENT_AUTH_SERVER_URL
+              value: https://sso.guengel.ch/auth/realms/astro
+            - name: QUARKUS_OIDC_CLIENT_CLIENT_ID
+              value: astro-server-catalog-fetcher-service
+            - name: QUARKUS_OIDC_CLIENT_CREDENTIALS_SECRET
               valueFrom:
                 secretKeyRef:
                   name: catalog-fetcher-secret
