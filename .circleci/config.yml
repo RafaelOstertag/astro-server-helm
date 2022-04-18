@@ -1,0 +1,41 @@
+version: 2.1
+parameters:
+  version:
+    type: string
+    default: none
+
+orbs:
+  c: rafaelostertag/common-orb@1.5.0
+
+jobs:
+  deploy-with-helm:
+    parameters:
+      namespace:
+        type: string
+      package:
+        type: string
+    executor: c/helm-executor
+    steps:
+      - checkout
+      - run:
+          name: Upgrade helm chart
+          command: |
+            helm upgrade -n <<parameters.namespace>> --set image.tag=<<pipeline.parameters.version>> <<parameters.package>> <<parameters.package>>
+
+workflows:
+  version: 2
+  deploy-services:
+    when:
+      not:
+        or:
+          - equal: [ none, <<pipeline.parameters.version>> ]
+          - equal: [ "", <<pipeline.parameters.version>> ]
+    jobs:
+      - deploy-with-helm:
+          name: deploy astro server
+          namespace: astro
+          package: astro-server
+      - deploy-with-helm:
+          name: deploy catalog fetcher
+          namespace: astro
+          package: catalog-fetcher
